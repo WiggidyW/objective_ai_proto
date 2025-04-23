@@ -8,91 +8,165 @@ package objective_ai;
 service ObjectiveAI {
     rpc GenerateSchema(GenerateSchemaRequest) returns (GenerateSchemaResponse);
     rpc Generate(GenerateRequest) returns (GenerateResponse);
+    rpc GenerateStreaming(GenerateRequest) returns (stream GenerateStreamingResponse);
     rpc GenerateInterpretation(GenerateInterpretationRequest) returns (GenerateInterpretationResponse);
     rpc GenerateFull(GenerateFullRequest) returns (GenerateFullResponse);
+    rpc GenerateFullStreaming(GenerateFullRequest) returns (stream GenerateFullStreamingResponse);
 }
 
 message GenerateSchemaRequest {
-    repeated Message prompt = 1;
-    google.protobuf.Int32Value max_output_tokens = 2;
-    google.protobuf.FloatValue temperature = 3;
-    google.protobuf.FloatValue top_p = 4;
-    google.protobuf.Int32Value top_k = 5;
+    repeated RequestMessage messages = 1;
+    MetaModel meta_model = 2;
 }
 
 message GenerateSchemaResponse {
-    google.protobuf.Struct schema = 1;
-    uint64 input_tokens_used = 2;
-    uint64 output_tokens_used = 3;
+    string id = 1; // request id
+    MetaModel meta_model = 2;
+    repeated GenerateSchemaChoice choices = 3;
+    Model model = 4;
+    Usage usage = 5;
+}
+
+message GenerateSchemaChoice {
+    FinishReason finish_reason = 1;
+    GenerateSchemaMessage message = 2;
+}
+
+message GenerateSchemaMessage {
+    Role role = 1; // always ASSISTANT
+    google.protobuf.Struct content = 2; // JSON schema
 }
 
 message GenerateRequest {
-    Accuracy accuracy = 1;
-    google.protobuf.Struct schema = 2;
-    repeated Message prompt = 3;
-    google.protobuf.Int32Value max_output_tokens = 4;
-    google.protobuf.FloatValue temperature = 5;
-    google.protobuf.FloatValue top_p = 6;
-    google.protobuf.Int32Value top_k = 7;
+    repeated RequestMessage messages = 1;
+    MetaModel meta_model = 2;
+    google.protobuf.Struct response_format = 3; // JSON schema
 }
 
 message GenerateResponse {
-    google.protobuf.Value response = 1;
-    double confidence = 2;
-    uint64 input_tokens_used = 3;
-    uint64 output_tokens_used = 4;
+    string id = 1; // request id
+    MetaModel meta_model = 2;
+    repeated GenerateChoice choices = 3;
+}
+
+message GenerateChoice {
+    FinishReason finish_reason = 1;
+    GenerateMessage message = 2;
+    string id = 3; // choice id
+    repeated GenerateVote votes = 4; // votes for the choice
+    double votes_weight = 5; // weight of the votes
+}
+
+message GenerateMessage {
+    Role role = 1; // always ASSISTANT
+    google.protobuf.Value content = 2; // JSON
+}
+
+message GenerateVote {
+    Model model = 1; // the model that voted
+    Usage usage = 2;
+}
+
+message GenerateStreamingVote {
+    string id = 1; // choice id
+    GenerateVote vote = 2;
+}
+
+message GenerateStreamingVotesWeights {
+    map<string, double> votes_weights = 1; // choice id to weight mapping
+}
+
+message GenerateStreamingResponse {
+    string id = 1; // request id
+    MetaModel meta_model = 2;
+    oneof data {
+        GenerateChoice choice = 3; // choice
+        GenerateStreamingVote vote = 4; // vote
+        GenerateStreamingVotesWeights votes_weights = 5; // vote weights (choice id to votes weight)
+    }
 }
 
 message GenerateInterpretationRequest {
-    repeated Message prompt = 1;
-    google.protobuf.Value response = 2;
-    google.protobuf.Int32Value max_output_tokens = 3;
-    google.protobuf.FloatValue temperature = 4;
-    google.protobuf.FloatValue top_p = 5;
-    google.protobuf.Int32Value top_k = 6;
+    repeated RequestMessage messages = 1;
+    MetaModel meta_model = 2;
+    GenerateMessage generate_message = 3;
 }
 
 message GenerateInterpretationResponse {
-    Message response = 1;
-    uint64 input_tokens_used = 2;
-    uint64 output_tokens_used = 3;
+    string id = 1; // request id
+    MetaModel meta_model = 2;
+    repeated GenerateInterpretationChoice choices = 3;
+    Model model = 4;
+    Usage usage = 5;
+}
+
+message GenerateInterpretationChoice {
+    FinishReason finish_reason = 1;
+    GenerateInterpretationMessage message = 2;
+}
+
+message GenerateInterpretationMessage {
+    Role role = 1; // always ASSISTANT
+    string content = 2;
 }
 
 message GenerateFullRequest {
-    Accuracy accuracy = 1;
-    repeated Message prompt = 2;
-
-    google.protobuf.Int32Value schema_max_output_tokens = 4;
-    google.protobuf.FloatValue schema_temperature = 5;
-    google.protobuf.FloatValue schema_top_p = 6;
-    google.protobuf.Int32Value schema_top_k = 7;
-
-    google.protobuf.Int32Value max_output_tokens = 8;
-    google.protobuf.FloatValue temperature = 9;
-    google.protobuf.FloatValue top_p = 10;
-    google.protobuf.Int32Value top_k = 11;
-
-    google.protobuf.Int32Value interpretation_max_output_tokens = 12;
-    google.protobuf.FloatValue interpretation_temperature = 13;
-    google.protobuf.FloatValue interpretation_top_p = 14;
-    google.protobuf.Int32Value interpretation_top_k = 15;
+    repeated RequestMessage messages = 1;
+    MetaModel meta_model = 2;
 }
 
 message GenerateFullResponse {
-    google.protobuf.Struct schema = 1;
-    google.protobuf.Value response = 2;
-    double confidence = 3;
-    Message interpretation_response = 4;
-    uint64 input_tokens_used = 5;
-    uint64 output_tokens_used = 6;
+    string id = 1; // request id
+    MetaModel meta_model = 2;
+    repeated GenerateSchemaChoice generate_schema_choices = 3;
+    Model generate_schema_model = 4;
+    Usage generate_schema_usage = 5;
+    repeated GenerateChoice generate_choices = 6;
+    repeated GenerateInterpretationChoice generate_interpretation_choices = 7;
+    Model generate_interpretation_model = 8;
+    Usage generate_interpretation_usage = 9;
 }
 
-enum Accuracy {
-    VERY_LOW = 0;
-    LOW = 1;
-    MEDIUM = 2;
-    HIGH = 3;
-    VERY_HIGH = 4;
+message GenerateFullStreamingResponse {
+    oneof data {
+        GenerateSchemaResponse generate_schema_response = 1;
+        GenerateStreamingResponse generate_response = 2;
+        GenerateInterpretationResponse generate_interpretation_response = 3;
+    }
+}
+
+message Usage {
+    uint32 prompt_tokens = 1;
+    uint32 completion_tokens = 2;
+}
+
+message RequestMessage {
+    Role role = 1;
+    oneof content {
+        string text = 2;
+        ContentParts parts = 3;
+    }
+}
+
+message ContentParts {
+    repeated ContentPart parts = 1;
+}
+
+message ContentPart {
+    oneof content {
+        string text = 1; // Text Content Part
+        ImageUrl image_url = 2; // Image Content Part
+    }
+}
+
+message ImageUrl {
+    string url = 1; // URL or base64 encoded image
+    google.protobuf.StringValue detail = 2; //  detail level of the image, defaults to 'auto'
+}
+
+enum VoteKind {
+    GENERATE = 0;
+    SELECT = 1;
 }
 
 enum Role {
@@ -101,7 +175,46 @@ enum Role {
     SYSTEM = 2;
 }
 
-message Message {
-    Role role = 1;
-    string content = 2;
+enum FinishReason {
+    STOP = 0;
+    TOOL_CALLS = 1;
+    LENGTH = 2;
+    CONTENT_FILTER = 3;
+    ERROR = 4;
+}
+
+enum MetaModel {
+    PAUPER_1 = 0;
+}
+
+enum Model {
+    MISTRAL_MINISTRAL_3B = 0;
+    META_LLAMA_3_1_8B = 1;
+    MISTRAL_MINISTRAL_8B = 2;
+    GOOGLE_GEMINI_2_0_FLASH_LITE = 3;
+    GOOGLE_GEMINI_1_5_FLASH_8B = 4;
+    META_LLAMA_4_SCOUT = 5;
+    META_LLAMA_3_3_70B = 6;
+    GOOGLE_GEMINI_2_0_FLASH = 7;
+    MISTRAL_MISTRAL_NEMO = 8;
+    MISTRAL_PIXTRAL_12B = 9;
+    OPENAI_GPT_4O_MINI = 10;
+    COHERE_COMMAND_R = 11;
+    META_LLAMA_4_MAVERICK = 12;
+    META_LLAMA_3_2_90B = 13;
+    DEEPSEEK_DEEPSEEK_V3 = 14;
+    QWEN_QWEN_2_5_VL_32B = 15;
+    QWEN_QWQ_32B = 16;
+    DEEPSEEK_DEEPSEEK_R1 = 17;
+    OPENAI_O3_MINI = 18;
+    OPENAI_O4_MINI = 19;
+    GOOGLE_GEMINI_1_5_PRO = 20;
+    MISTRAL_MISTRAL_LARGE = 21;
+    MISTRAL_PIXTRAL_LARGE = 22;
+    GOOGLE_GEMINI_2_5_PRO = 23;
+    META_LLAMA_3_1_405B = 24;
+    OPENAI_GPT_4O = 25;
+    COHERE_COMMAND_R_PLUS = 26;
+    COHERE_COMMAND_A = 27;
+    OPENAI_O3 = 28;
 }
