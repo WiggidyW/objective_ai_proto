@@ -47,6 +47,7 @@ message GenerateResponse {
     string id = 1; // request id
     MetaModel meta_model = 2;
     repeated GenerateChoice choices = 3;
+    double total_votes_weight = 4;
 }
 
 message GenerateChoice {
@@ -74,6 +75,7 @@ message GenerateStreamingVote {
 
 message GenerateStreamingVotesWeights {
     map<string, double> votes_weights = 1; // choice id to weight mapping
+    double total_votes_weight = 2;
 }
 
 message GenerateStreamingResponse {
@@ -136,8 +138,8 @@ message GenerateFullStreamingResponse {
 }
 
 message Usage {
-    uint32 prompt_tokens = 1;
-    uint32 completion_tokens = 2;
+    uint64 prompt_tokens = 1;
+    uint64 completion_tokens = 2;
 }
 
 message RequestMessage {
