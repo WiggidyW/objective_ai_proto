@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/wrappers.proto";
+
+package objective_ai;
+
+service ObjectiveAI {
+    rpc GenerateSchema(GenerateSchemaRequest) returns (GenerateSchemaResponse);
+    rpc Generate(GenerateRequest) returns (GenerateResponse);
+    rpc GenerateInterpretation(GenerateInterpretationRequest) returns (GenerateInterpretationResponse);
+    rpc GenerateFull(GenerateFullRequest) returns (GenerateFullResponse);
+}
+
+message GenerateSchemaRequest {
+    repeated Message prompt = 1;
+    google.protobuf.Int32Value max_output_tokens = 2;
+    google.protobuf.FloatValue temperature = 3;
+    google.protobuf.FloatValue top_p = 4;
+    google.protobuf.Int32Value top_k = 5;
+}
+
+message GenerateSchemaResponse {
+    google.protobuf.Struct schema = 1;
+    uint64 input_tokens_used = 2;
+    uint64 output_tokens_used = 3;
+}
+
+message GenerateRequest {
+    Accuracy accuracy = 1;
+    google.protobuf.Struct schema = 2;
+    repeated Message prompt = 3;
+    google.protobuf.Int32Value max_output_tokens = 4;
+    google.protobuf.FloatValue temperature = 5;
+    google.protobuf.FloatValue top_p = 6;
+    google.protobuf.Int32Value top_k = 7;
+}
+
+message GenerateResponse {
+    google.protobuf.Value response = 1;
+    double confidence = 2;
+    uint64 input_tokens_used = 3;
+    uint64 output_tokens_used = 4;
+}
+
+message GenerateInterpretationRequest {
+    repeated Message prompt = 1;
+    google.protobuf.Value response = 2;
+    google.protobuf.Int32Value max_output_tokens = 3;
+    google.protobuf.FloatValue temperature = 4;
+    google.protobuf.FloatValue top_p = 5;
+    google.protobuf.Int32Value top_k = 6;
+}
+
+message GenerateInterpretationResponse {
+    Message response = 1;
+    uint64 input_tokens_used = 2;
+    uint64 output_tokens_used = 3;
+}
+
+message GenerateFullRequest {
+    Accuracy accuracy = 1;
+    repeated Message prompt = 2;
+
+    google.protobuf.Int32Value schema_max_output_tokens = 4;
+    google.protobuf.FloatValue schema_temperature = 5;
+    google.protobuf.FloatValue schema_top_p = 6;
+    google.protobuf.Int32Value schema_top_k = 7;
+
+    google.protobuf.Int32Value max_output_tokens = 8;
+    google.protobuf.FloatValue temperature = 9;
+    google.protobuf.FloatValue top_p = 10;
+    google.protobuf.Int32Value top_k = 11;
+
+    google.protobuf.Int32Value interpretation_max_output_tokens = 12;
+    google.protobuf.FloatValue interpretation_temperature = 13;
+    google.protobuf.FloatValue interpretation_top_p = 14;
+    google.protobuf.Int32Value interpretation_top_k = 15;
+}
+
+message GenerateFullResponse {
+    google.protobuf.Struct schema = 1;
+    google.protobuf.Value response = 2;
+    double confidence = 3;
+    Message interpretation_response = 4;
+    uint64 input_tokens_used = 5;
+    uint64 output_tokens_used = 6;
+}
+
+enum Accuracy {
+    VERY_LOW = 0;
+    LOW = 1;
+    MEDIUM = 2;
+    HIGH = 3;
+    VERY_HIGH = 4;
+}
+
+enum Role {
+    USER = 0;
+    MODEL = 1;
+    SYSTEM = 2;
+}
+
+message Message {
+    Role role = 1;
+    string content = 2;
+}
