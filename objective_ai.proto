@@ -183,6 +183,7 @@ enum FinishReason {
     LENGTH = 2;
     CONTENT_FILTER = 3;
     ERROR = 4;
+    NONE = 5;
 }
 
 enum MetaModel {
