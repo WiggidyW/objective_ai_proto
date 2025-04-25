@@ -124,9 +124,10 @@ message GenerateFullResponse {
     Model generate_schema_model = 4;
     Usage generate_schema_usage = 5;
     repeated GenerateChoice generate_choices = 6;
-    repeated GenerateInterpretationChoice generate_interpretation_choices = 7;
-    Model generate_interpretation_model = 8;
-    Usage generate_interpretation_usage = 9;
+    double generate_total_votes_weight = 7;
+    repeated GenerateInterpretationChoice generate_interpretation_choices = 8;
+    Model generate_interpretation_model = 9;
+    Usage generate_interpretation_usage = 10;
 }
 
 message GenerateFullStreamingResponse {
