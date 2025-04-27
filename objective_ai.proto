@@ -61,6 +61,7 @@ message GenerateChoice {
 message GenerateMessage {
     Role role = 1; // always ASSISTANT
     google.protobuf.Value content = 2; // JSON
+    repeated string reasoning = 3;
 }
 
 message GenerateVote {
