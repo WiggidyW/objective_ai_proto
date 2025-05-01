@@ -228,5 +228,10 @@ message ArrayJsonSchema {
 
 message ObjectJsonSchema {
     google.protobuf.StringValue description = 1; // optional
-    map<string, JsonSchema> properties = 2;
+    repeated ObjectJsonSchemaProperty properties = 2;
+}
+
+message ObjectJsonSchemaProperty {
+    string key = 1;
+    JsonSchema value = 2; // required
 }
