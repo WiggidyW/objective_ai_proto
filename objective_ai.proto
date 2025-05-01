@@ -39,10 +39,9 @@ message QueryStreamingChoiceConfidence {
 
 message QueryChoice {
     string id = 1; // choice id
-    google.protobuf.StringValue finish_reason = 2;
-    QueryMessage message = 3; // required
-    repeated QueryChoiceVote votes = 4;
-    double confidence = 5;
+    QueryMessage message = 2; // required
+    repeated QueryChoiceVote votes = 3;
+    double confidence = 4;
 }
 
 message QueryChoiceVote {
@@ -51,7 +50,8 @@ message QueryChoiceVote {
     string provider = 3;
     QueryChoiceVoteKind kind = 4;
     string reasoning = 5;
-    Usage usage = 6; // optional
+    google.protobuf.StringValue finish_reason = 7;
+    Usage usage = 8; // optional
 }
 
 message QueryMessage {
