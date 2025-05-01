@@ -6,56 +6,82 @@ import "google/protobuf/wrappers.proto";
 package objective_ai;
 
 service ObjectiveAI {
-    rpc GenerateSchema(GenerateSchemaRequest) returns (GenerateSchemaResponse);
-    rpc Generate(GenerateRequest) returns (GenerateResponse);
-    rpc GenerateStreaming(GenerateRequest) returns (stream GenerateStreamingResponse);
-    rpc GenerateInterpretation(GenerateInterpretationRequest) returns (GenerateInterpretationResponse);
-    rpc GenerateFull(GenerateFullRequest) returns (GenerateFullResponse);
-    rpc GenerateFullStreaming(GenerateFullRequest) returns (stream GenerateFullStreamingResponse);
+    rpc Query(QueryRequest) returns (QueryResponse);
+    rpc QueryStreaming(QueryRequest) returns (stream QueryStreamingResponse);
+    rpc Chat(ChatRequest) returns (ChatResponse);
+    rpc ChatStreaming(ChatRequest) returns (stream ChatResponse);
 }
 
-message GenerateSchemaRequest {
-    repeated RequestMessage messages = 1;
-    MetaModel meta_model = 2;
+message QueryRequest {
+    string meta_model = 1;
+    repeated Message messages = 2;
+    JsonSchema response_format = 3; // required
 }
 
-message GenerateSchemaResponse {
+message QueryResponse {
     string id = 1; // request id
-    MetaModel meta_model = 2;
-    repeated GenerateSchemaChoice choices = 3;
-    Model model = 4;
-    Usage usage = 5;
+    string meta_model = 2;
+    repeated QueryChoice choices = 3;
 }
 
-message GenerateSchemaChoice {
-    FinishReason finish_reason = 1;
-    GenerateSchemaMessage message = 2;
-}
-
-message GenerateSchemaMessage {
-    Role role = 1; // always ASSISTANT
-    google.protobuf.Struct content = 2; // JSON schema
-}
-
-message GenerateRequest {
-    repeated RequestMessage messages = 1;
-    MetaModel meta_model = 2;
-    google.protobuf.Struct response_format = 3; // JSON schema
-}
-
-message GenerateResponse {
+message QueryStreamingResponse {
     string id = 1; // request id
-    MetaModel meta_model = 2;
-    repeated GenerateChoice choices = 3;
-    double total_votes_weight = 4;
+    oneof kind {
+        QueryChoice choice = 2; // choice
+        QueryChoiceVote vote = 3; // vote
+        QueryStreamingChoiceConfidence choice_confidence = 4; // choice confidence
+    }
 }
 
-message GenerateChoice {
-    FinishReason finish_reason = 1;
-    GenerateMessage message = 2;
-    string id = 3; // choice id
-    repeated GenerateVote votes = 4; // votes for the choice
-    double votes_weight = 5; // weight of the votes
+message QueryStreamingChoiceConfidence {
+    map<string, double> confidence = 1; // choice id to confidence
+}
+
+message QueryChoice {
+    string id = 1; // choice id
+    google.protobuf.StringValue finish_reason = 2;
+    QueryMessage message = 3; // required
+    repeated QueryChoiceVote votes = 4;
+    double confidence = 5;
+}
+
+message QueryChoiceVote {
+    string id = 1; // choice id
+    string model = 2;
+    string provider = 3;
+    QueryChoiceVoteKind kind = 4;
+    string reasoning = 5;
+    Usage usage = 6; // optional
+}
+
+message QueryMessage {
+    Role role = 1;
+    google.protobuf.Value content = 2; // required
+}
+
+message ChatRequest {
+    string model = 1;
+    repeated Message messages = 2;
+    repeated Tool tools = 3;
+    ToolChoice tool_choice = 4; // optional
+}
+
+message ChatResponse {
+    string model = 1;
+    string id = 2; // request id
+    repeated ChatChoice choices = 3;
+    Usage usage = 4; // optional
+}
+
+message ChatChoice {
+    google.protobuf.StringValue finish_reason = 2; // optional
+    Message message = 3; // required
+    Usage usage = 4; // optional
+}
+
+message Usage {
+    uint64 prompt_tokens = 1;
+    uint64 completion_tokens = 2;
 }
 
 message GenerateMessage {
@@ -64,93 +90,50 @@ message GenerateMessage {
     repeated string reasoning = 3;
 }
 
-message GenerateVote {
-    Model model = 1; // the model that voted
-    Usage usage = 2;
-}
-
-message GenerateStreamingVote {
-    string id = 1; // choice id
-    GenerateVote vote = 2;
-    google.protobuf.StringValue reasoning = 3;
-}
-
-message GenerateStreamingVotesWeights {
-    map<string, double> votes_weights = 1; // choice id to weight mapping
-    double total_votes_weight = 2;
-}
-
-message GenerateStreamingResponse {
-    string id = 1; // request id
-    MetaModel meta_model = 2;
-    oneof data {
-        GenerateChoice choice = 3; // choice
-        GenerateStreamingVote vote = 4; // vote
-        GenerateStreamingVotesWeights votes_weights = 5; // vote weights (choice id to votes weight)
+message Message {
+    oneof kind { // required
+        UserMessage user = 1;
+        AssistantMessage assistant = 2;
+        SystemMessage system = 3;
+        ToolMessage tool = 4;
     }
 }
 
-message GenerateInterpretationRequest {
-    repeated RequestMessage messages = 1;
-    MetaModel meta_model = 2;
-    GenerateMessage generate_message = 3;
+message UserMessage {
+    MessageContent content = 1; // required
 }
 
-message GenerateInterpretationResponse {
-    string id = 1; // request id
-    MetaModel meta_model = 2;
-    repeated GenerateInterpretationChoice choices = 3;
-    Model model = 4;
-    Usage usage = 5;
+message AssistantMessage {
+    MessageContent content = 1; // required
+    repeated ToolCall tool_calls = 2;
 }
 
-message GenerateInterpretationChoice {
-    FinishReason finish_reason = 1;
-    GenerateInterpretationMessage message = 2;
+message SystemMessage {
+    MessageContent content = 1; // required
 }
 
-message GenerateInterpretationMessage {
-    Role role = 1; // always ASSISTANT
-    string content = 2;
+message ToolMessage {
+    MessageContent content = 1; // required
+    string tool_call_id = 2;
 }
 
-message GenerateFullRequest {
-    repeated RequestMessage messages = 1;
-    MetaModel meta_model = 2;
-}
-
-message GenerateFullResponse {
-    string id = 1; // request id
-    MetaModel meta_model = 2;
-    repeated GenerateSchemaChoice generate_schema_choices = 3;
-    Model generate_schema_model = 4;
-    Usage generate_schema_usage = 5;
-    repeated GenerateChoice generate_choices = 6;
-    double generate_total_votes_weight = 7;
-    repeated GenerateInterpretationChoice generate_interpretation_choices = 8;
-    Model generate_interpretation_model = 9;
-    Usage generate_interpretation_usage = 10;
-}
-
-message GenerateFullStreamingResponse {
-    oneof data {
-        GenerateSchemaResponse generate_schema_response = 1;
-        GenerateStreamingResponse generate_response = 2;
-        GenerateInterpretationResponse generate_interpretation_response = 3;
+message MessageContent {
+    oneof kind { // required
+        string text = 1;
+        ContentParts parts = 2;
     }
 }
 
-message Usage {
-    uint64 prompt_tokens = 1;
-    uint64 completion_tokens = 2;
+message ToolCall {
+    string id = 1;
+    oneof kind { // required
+        FunctionToolCall function = 2;
+    }
 }
 
-message RequestMessage {
-    Role role = 1;
-    oneof content {
-        string text = 2;
-        ContentParts parts = 3;
-    }
+message FunctionToolCall {
+    string name = 1;
+    JsonSchema arguments = 2;
 }
 
 message ContentParts {
@@ -158,7 +141,7 @@ message ContentParts {
 }
 
 message ContentPart {
-    oneof content {
+    oneof kind {
         string text = 1; // Text Content Part
         ImageUrl image_url = 2; // Image Content Part
     }
@@ -169,7 +152,35 @@ message ImageUrl {
     google.protobuf.StringValue detail = 2; //  detail level of the image, defaults to 'auto'
 }
 
-enum VoteKind {
+message Tool {
+    oneof kind {
+        FunctionTool function = 1;
+    }
+}
+
+message FunctionTool {
+    string name = 1;
+    google.protobuf.StringValue description = 2; // optional
+    google.protobuf.Struct parameters = 3; // required
+}
+
+message ToolChoice {
+    oneof kind { // required
+        NoneToolChoice none = 1;
+        AutoToolChoice auto = 2;
+        FunctionToolChoice function = 3;
+    }
+}
+
+message NoneToolChoice {}
+
+message AutoToolChoice {}
+
+message FunctionToolChoice {
+    string name = 1;
+}
+
+enum QueryChoiceVoteKind {
     GENERATE = 0;
     SELECT = 1;
 }
@@ -178,49 +189,44 @@ enum Role {
     USER = 0;
     ASSISTANT = 1;
     SYSTEM = 2;
+    TOOL = 3;
 }
 
-enum FinishReason {
-    STOP = 0;
-    TOOL_CALLS = 1;
-    LENGTH = 2;
-    CONTENT_FILTER = 3;
-    ERROR = 4;
-    NONE = 5;
+
+message JsonSchema {
+    oneof kind { // required
+        BooleanJsonSchema boolean = 1;
+        NumberJsonSchema number = 2;
+        IntegerJsonSchema integer = 3;
+        StringJsonSchema string = 4;
+        ArrayJsonSchema array = 5;
+        ObjectJsonSchema object = 6;
+    }
 }
 
-enum MetaModel {
-    PAUPER_1 = 0;
+message BooleanJsonSchema {
+    google.protobuf.StringValue description = 1; // optional
 }
 
-enum Model {
-    MISTRAL_MINISTRAL_3B = 0;
-    META_LLAMA_3_1_8B = 1;
-    MISTRAL_MINISTRAL_8B = 2;
-    GOOGLE_GEMINI_2_0_FLASH_LITE = 3;
-    GOOGLE_GEMINI_1_5_FLASH_8B = 4;
-    META_LLAMA_4_SCOUT = 5;
-    META_LLAMA_3_3_70B = 6;
-    GOOGLE_GEMINI_2_0_FLASH = 7;
-    MISTRAL_MISTRAL_NEMO = 8;
-    MISTRAL_PIXTRAL_12B = 9;
-    OPENAI_GPT_4O_MINI = 10;
-    COHERE_COMMAND_R = 11;
-    META_LLAMA_4_MAVERICK = 12;
-    META_LLAMA_3_2_90B = 13;
-    DEEPSEEK_DEEPSEEK_V3 = 14;
-    QWEN_QWEN_2_5_VL_32B = 15;
-    QWEN_QWQ_32B = 16;
-    DEEPSEEK_DEEPSEEK_R1 = 17;
-    OPENAI_O3_MINI = 18;
-    OPENAI_O4_MINI = 19;
-    GOOGLE_GEMINI_1_5_PRO = 20;
-    MISTRAL_MISTRAL_LARGE = 21;
-    MISTRAL_PIXTRAL_LARGE = 22;
-    GOOGLE_GEMINI_2_5_PRO = 23;
-    META_LLAMA_3_1_405B = 24;
-    OPENAI_GPT_4O = 25;
-    COHERE_COMMAND_R_PLUS = 26;
-    COHERE_COMMAND_A = 27;
-    OPENAI_O3 = 28;
+message NumberJsonSchema {
+    google.protobuf.StringValue description = 1; // optional
+}
+
+message IntegerJsonSchema {
+    google.protobuf.StringValue description = 1; // optional
+}
+
+message StringJsonSchema {
+    google.protobuf.StringValue description = 1; // optional
+    repeated string enum = 2;
+}
+
+message ArrayJsonSchema {
+    google.protobuf.StringValue description = 1; // optional
+    JsonSchema items = 2;
+}
+
+message ObjectJsonSchema {
+    google.protobuf.StringValue description = 1; // optional
+    map<string, JsonSchema> properties = 2;
 }
