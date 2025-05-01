@@ -133,7 +133,7 @@ message ToolCall {
 
 message FunctionToolCall {
     string name = 1;
-    JsonSchema arguments = 2;
+    google.protobuf.Value arguments = 2; // required
 }
 
 message ContentParts {
@@ -161,7 +161,7 @@ message Tool {
 message FunctionTool {
     string name = 1;
     google.protobuf.StringValue description = 2; // optional
-    google.protobuf.Struct parameters = 3; // required
+    google.protobuf.Value parameters = 3; // required
 }
 
 message ToolChoice {
