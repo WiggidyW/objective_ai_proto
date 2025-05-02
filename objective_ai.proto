@@ -9,7 +9,7 @@ service ObjectiveAI {
     rpc Query(QueryRequest) returns (QueryResponse);
     rpc QueryStreaming(QueryRequest) returns (stream QueryStreamingResponse);
     rpc Chat(ChatRequest) returns (ChatResponse);
-    rpc ChatStreaming(ChatRequest) returns (stream ChatResponse);
+    rpc ChatStreaming(ChatRequest) returns (stream ChatStreamingResponse);
 }
 
 message QueryRequest {
@@ -66,16 +66,46 @@ message ChatRequest {
     ToolChoice tool_choice = 4; // optional
 }
 
+message ChatStreamingResponse {
+    string id = 1; // request id
+    oneof kind { // required
+        ChatResponseSingle assistant_stream = 2;
+        ChatResponseSingle assistant_query = 3;
+        QueryStreamingResponse query_stream = 4;
+        ToolMessage query_message = 5;
+    }
+}
+
 message ChatResponse {
     string id = 1; // request id
-    string model = 2;
-    repeated ChatChoice choices = 3;
-    Usage usage = 4; // optional
+    oneof kind { // required
+        ChatResponseSingle single = 2;
+        ChatResponseWithQuery query = 3;
+    }
+}
+
+message ChatResponseWithQuery {
+    ChatResponseSingle assistant_query = 1; // required
+    ChatQueryResponse query_response = 2; // required
+    ChatResponseSingle assistant_response = 3; // required
+}
+
+message ChatResponseSingle {
+    string model = 1;
+    repeated ChatChoice choices = 2;
+    Usage usage = 3; // optional
+    google.protobuf.StringValue provider = 4; // optional
+}
+
+message ChatQueryResponse {
+    QueryResponse query_response = 1; // required
+    ToolMessage message = 2; // required
 }
 
 message ChatChoice {
+    int32 index = 1;
     google.protobuf.StringValue finish_reason = 2; // optional
-    Message message = 3; // required
+    AssistantMessage message = 3; // required
 }
 
 message Usage {
@@ -98,22 +128,22 @@ message Message {
     }
 }
 
-message UserMessage {
-    MessageContent content = 1; // required
-}
-
 message AssistantMessage {
     MessageContent content = 1; // required
     repeated ToolCall tool_calls = 2;
 }
 
-message SystemMessage {
-    MessageContent content = 1; // required
-}
-
 message ToolMessage {
     MessageContent content = 1; // required
     string tool_call_id = 2;
+}
+
+message UserMessage {
+    MessageContent content = 1; // required
+}
+
+message SystemMessage {
+    MessageContent content = 1; // required
 }
 
 message MessageContent {
