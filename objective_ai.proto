@@ -51,7 +51,7 @@ message QueryChoiceVote {
     QueryChoiceVoteKind kind = 4;
     string reasoning = 5;
     google.protobuf.StringValue finish_reason = 7;
-    Usage usage = 8; // optional
+    Usage usage = 8; // required
 }
 
 message QueryMessage {
