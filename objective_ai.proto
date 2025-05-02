@@ -76,7 +76,6 @@ message ChatResponse {
 message ChatChoice {
     google.protobuf.StringValue finish_reason = 2; // optional
     Message message = 3; // required
-    Usage usage = 4; // optional
 }
 
 message Usage {
