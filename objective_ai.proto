@@ -47,7 +47,7 @@ message QueryChoice {
 message QueryChoiceVote {
     string id = 1; // choice id
     string model = 2;
-    string provider = 3;
+    google.protobuf.StringValue provider = 3;
     QueryChoiceVoteKind kind = 4;
     string reasoning = 5;
     google.protobuf.StringValue finish_reason = 7;
@@ -141,7 +141,7 @@ message ContentParts {
 }
 
 message ContentPart {
-    oneof kind {
+    oneof kind { // required
         string text = 1; // Text Content Part
         ImageUrl image_url = 2; // Image Content Part
     }
