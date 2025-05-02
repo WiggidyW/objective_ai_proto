@@ -70,7 +70,7 @@ message ChatStreamingResponse {
     string id = 1; // request id
     oneof kind { // required
         ChatResponseSingle assistant_stream = 2;
-        ChatResponseSingle assistant_query = 3;
+        ChatResponseSingle assistant_tool_call = 3;
         QueryStreamingResponse query_stream = 4;
         ToolMessage query_message = 5;
     }
