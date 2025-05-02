@@ -67,8 +67,8 @@ message ChatRequest {
 }
 
 message ChatResponse {
-    string model = 1;
-    string id = 2; // request id
+    string id = 1; // request id
+    string model = 2;
     repeated ChatChoice choices = 3;
     Usage usage = 4; // optional
 }
