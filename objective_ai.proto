@@ -8,14 +8,15 @@ package objective_ai;
 service ObjectiveAI {
     rpc Query(QueryRequest) returns (QueryResponse);
     rpc QueryStreaming(QueryRequest) returns (stream QueryStreamingResponse);
-    rpc Chat(ChatRequest) returns (ChatResponse);
-    rpc ChatStreaming(ChatRequest) returns (stream ChatStreamingResponse);
 }
 
 message QueryRequest {
-    string meta_model = 1;
-    repeated Message messages = 2;
+    repeated Message messages = 1;
+    string meta_model = 2;
     JsonSchema response_format = 3; // required
+    Stop stop = 4; // optional
+    google.protobuf.UInt64Value max_tokens = 5; // optional
+    repeated Tool tools = 6; // optional
 }
 
 message QueryResponse {
@@ -59,55 +60,6 @@ message QueryMessage {
     google.protobuf.Value content = 2; // required
 }
 
-message ChatRequest {
-    string model = 1;
-    repeated Message messages = 2;
-    repeated Tool tools = 3;
-    ToolChoice tool_choice = 4; // optional
-}
-
-message ChatStreamingResponse {
-    string id = 1; // request id
-    oneof kind { // required
-        ChatResponseSingle assistant_stream = 2;
-        ChatResponseSingle assistant_tool_call = 3;
-        QueryStreamingResponse query_stream = 4;
-        ToolMessage query_message = 5;
-    }
-}
-
-message ChatResponse {
-    string id = 1; // request id
-    oneof kind { // required
-        ChatResponseSingle single = 2;
-        ChatResponseWithQuery query = 3;
-    }
-}
-
-message ChatResponseWithQuery {
-    ChatResponseSingle assistant_query = 1; // required
-    ChatQueryResponse query_response = 2; // required
-    ChatResponseSingle assistant_response = 3; // required
-}
-
-message ChatResponseSingle {
-    string model = 1;
-    repeated ChatChoice choices = 2;
-    Usage usage = 3; // optional
-    google.protobuf.StringValue provider = 4; // optional
-}
-
-message ChatQueryResponse {
-    QueryResponse query_response = 1; // required
-    ToolMessage message = 2; // required
-}
-
-message ChatChoice {
-    int32 index = 1;
-    google.protobuf.StringValue finish_reason = 2; // optional
-    AssistantMessage message = 3; // required
-}
-
 message Usage {
     uint64 prompt_tokens = 1;
     uint64 completion_tokens = 2;
@@ -144,6 +96,17 @@ message UserMessage {
 
 message SystemMessage {
     MessageContent content = 1; // required
+}
+
+message Stop {
+    oneof kind { // required
+        string text = 1;
+        RepeatedText texts = 2;
+    }
+}
+
+message RepeatedText {
+    repeated string texts = 1; // required
 }
 
 message MessageContent {
@@ -191,22 +154,6 @@ message FunctionTool {
     string name = 1;
     google.protobuf.StringValue description = 2; // optional
     google.protobuf.Value parameters = 3; // required
-}
-
-message ToolChoice {
-    oneof kind { // required
-        NoneToolChoice none = 1;
-        AutoToolChoice auto = 2;
-        FunctionToolChoice function = 3;
-    }
-}
-
-message NoneToolChoice {}
-
-message AutoToolChoice {}
-
-message FunctionToolChoice {
-    string name = 1;
 }
 
 enum QueryChoiceVoteKind {
