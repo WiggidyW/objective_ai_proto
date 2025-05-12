@@ -48,11 +48,13 @@ message QueryChoice {
 message QueryChoiceVote {
     string id = 1; // choice id
     string model = 2;
-    google.protobuf.StringValue provider = 3;
-    QueryChoiceVoteKind kind = 4;
-    string reasoning = 5;
-    google.protobuf.StringValue finish_reason = 7;
-    Usage usage = 8; // required
+    double temperature = 3;
+    double top_p = 4;
+    google.protobuf.StringValue provider = 5;
+    QueryChoiceVoteKind kind = 6;
+    string reasoning = 7;
+    google.protobuf.StringValue finish_reason = 8;
+    Usage usage = 9; // required
 }
 
 message QueryMessage {
