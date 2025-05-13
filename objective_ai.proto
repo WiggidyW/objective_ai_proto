@@ -67,12 +67,6 @@ message Usage {
     uint64 completion_tokens = 2;
 }
 
-message GenerateMessage {
-    Role role = 1; // always ASSISTANT
-    google.protobuf.Value content = 2; // JSON
-    repeated string reasoning = 3;
-}
-
 message Message {
     oneof kind { // required
         UserMessage user = 1;
