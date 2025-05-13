@@ -27,6 +27,7 @@ message QueryResponse {
 
 message QueryStreamingResponse {
     string id = 1; // request id
+    // todo add meta_model
     oneof kind {
         QueryChoice choice = 2; // choice
         QueryChoiceVote vote = 3; // vote
