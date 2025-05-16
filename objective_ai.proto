@@ -27,11 +27,11 @@ message QueryResponse {
 
 message QueryStreamingResponse {
     string id = 1; // request id
-    // todo add meta_model
+    string meta_model = 2;
     oneof kind {
-        QueryChoice choice = 2; // choice
-        QueryChoiceVote vote = 3; // vote
-        QueryStreamingChoiceConfidence choice_confidence = 4; // choice confidence
+        QueryChoice choice = 3; // choice
+        QueryChoiceVote vote = 4; // vote
+        QueryStreamingChoiceConfidence choice_confidence = 5; // choice confidence
     }
 }
 
